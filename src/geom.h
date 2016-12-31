@@ -27,6 +27,9 @@ struct object: meta_t {
 	object(const object& o) = default;
 	object(object&& o) = default;
 
+	object& operator=(const object&) = default;
+	object& operator=(object&&) = default;
+
 	object(vec p, annotation m) :
 			meta_t { std::move(m) }, point { std::move(p) } {
 
@@ -68,7 +71,7 @@ struct point_reference {
 	}
 
 	point_reference& operator=(T&& value) {
-		point() = std::move(value.point);
+		access->point_matrix.col(index) = value.point;
 		meta() = static_cast<typename T::annotation&&>(value);
 		return *this;
 	}
@@ -107,10 +110,10 @@ private:
 		return access->annotations[index];
 	}
 
-	auto point() const {
+	const auto& point() const {
 		return access->point_matrix.col(index);
 	}
-	auto meta() const {
+	const auto& meta() const {
 		return access->annotations[index];
 	}
 
@@ -323,13 +326,28 @@ public:
 	collection(collection&&) = default;
 
 	collection(std::initializer_list<T> o) :
-			point_matrix ( +T::dim, o.size() ), annotations { o.size() } {
-		int index{0};
+			point_matrix(+T::dim, o.size()), annotations ( o.size() ) {
+		int index { 0 };
 		for (auto&& x : o) {
 			point_matrix.col(index) = x.point;
 			annotations[index] = static_cast<typename T::annotation>(x);
 			++index;
 		}
+	}
+
+	template<class iterator_t>
+	collection(iterator_t begin, iterator_t end) :
+			point_matrix(+T::dim, end - begin), annotations ( end - begin ) {
+		int index { 0 };
+		for (auto i = begin; i != end; ++i) {
+			point_matrix.col(index) = i->point;
+			annotations[index] = static_cast<typename T::annotation>(*i);
+			++index;
+		}
+	}
+
+	explicit collection(size_type size) :
+			point_matrix(+T::dim, size), annotations( size ) {
 	}
 
 	collection& operator=(const collection&) = default;
@@ -362,6 +380,14 @@ public:
 	bool empty() const noexcept {
 		return annotations.empty();
 	}
+
+	const auto& points() const noexcept {
+		return point_matrix;
+	}
+	auto& points() noexcept {
+		return point_matrix;
+	}
+
 private:
 	friend class point_reference<T> ;
 
