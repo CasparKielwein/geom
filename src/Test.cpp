@@ -3,7 +3,7 @@
 #include "xml_listener.h"
 #include "cute_runner.h"
 
-#include "geom.h"
+#include "collection.h"
 
 struct tag {
 	int t = 0;
@@ -12,7 +12,7 @@ struct tag {
 		return t == o.t;
 	}
 };
-using tagged_vec3d = geom::object<3,tag>;
+using tagged_vec3d = geom::object<Eigen::Vector3d,tag>;
 
 void geom_initialize() {
 

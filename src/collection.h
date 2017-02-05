@@ -5,8 +5,8 @@
  *      Author: ckielwein
  */
 
-#ifndef SRC_GEOM_H_
-#define SRC_GEOM_H_
+#ifndef GEOM_SRC_COLLECTION_H_
+#define GEOM_SRC_COLLECTION_H_
 
 #include <eigen3/Eigen/Eigen>
 
@@ -15,14 +15,13 @@ namespace geom {
 template<class >
 class collection;
 
-template<int dim>
-using vec_t = Eigen::Vector3d;
-
-template<int dimension, class meta_t>
+template<class vector_t, class meta_t>
 struct object: meta_t {
-	static constexpr auto dim = dimension;
 	using annotation = meta_t;
-	using vec = vec_t<dim>;
+	using vector_type = vector_t;
+
+	object() = default;
+	~object() = default;
 
 	object(const object& o) = default;
 	object(object&& o) = default;
@@ -30,9 +29,8 @@ struct object: meta_t {
 	object& operator=(const object&) = default;
 	object& operator=(object&&) = default;
 
-	object(vec p, annotation m) :
+	object(vector_type p, annotation m) :
 			meta_t { std::move(m) }, point { std::move(p) } {
-
 	}
 
 	bool operator==(const object& o) const {
@@ -43,7 +41,7 @@ struct object: meta_t {
 		return !(*this == o);
 	}
 
-	vec point;
+	vector_type point;
 };
 
 /**
@@ -71,7 +69,7 @@ struct point_reference {
 	}
 
 	point_reference& operator=(T&& value) {
-		access->point_matrix.col(index) = value.point;
+		point() = value.point;
 		meta() = static_cast<typename T::annotation&&>(value);
 		return *this;
 	}
@@ -104,14 +102,14 @@ struct point_reference {
 
 private:
 	auto& point() {
-		return access->point_matrix.col(index);
+		return access->point_matrix[index];
 	}
 	auto& meta() {
 		return access->annotations[index];
 	}
 
 	const auto& point() const {
-		return access->point_matrix.col(index);
+		return access->point_matrix[index];
 	}
 	const auto& meta() const {
 		return access->annotations[index];
@@ -131,6 +129,7 @@ template<class T>
 class collection {
 public:
 	using value_type = T;
+	using vector_type = typename T::vector_type;
 	using annotation = typename T::annotation;
 	using difference_type = T*; //todo
 	using size_type = size_t;
@@ -150,7 +149,6 @@ public:
 
 		iterator(size_type index, collection* access) :
 				index { index }, access { access } {
-
 		}
 
 		~iterator() = default;
@@ -326,10 +324,10 @@ public:
 	collection(collection&&) = default;
 
 	collection(std::initializer_list<T> o) :
-			point_matrix(+T::dim, o.size()), annotations ( o.size() ) {
+			point_matrix(o.size()), annotations ( o.size() ) {
 		int index { 0 };
 		for (auto&& x : o) {
-			point_matrix.col(index) = x.point;
+			point_matrix[index] = x.point;
 			annotations[index] = static_cast<typename T::annotation>(x);
 			++index;
 		}
@@ -337,17 +335,17 @@ public:
 
 	template<class iterator_t>
 	collection(iterator_t begin, iterator_t end) :
-			point_matrix(+T::dim, end - begin), annotations ( end - begin ) {
+			point_matrix(end - begin), annotations ( end - begin ) {
 		int index { 0 };
 		for (auto i = begin; i != end; ++i) {
-			point_matrix.col(index) = i->point;
+			point_matrix[index] = i->point;
 			annotations[index] = static_cast<typename T::annotation>(*i);
 			++index;
 		}
 	}
 
 	explicit collection(size_type size) :
-			point_matrix(+T::dim, size), annotations( size ) {
+			point_matrix(size), annotations( size ) {
 	}
 
 	collection& operator=(const collection&) = default;
@@ -391,10 +389,11 @@ public:
 private:
 	friend class point_reference<T> ;
 
-	Eigen::Matrix<double, T::dim, Eigen::Dynamic> point_matrix;
+	//Eigen::Matrix<double, , Eigen::Dynamic> point_matrix;
+	std::vector<vector_type> point_matrix;
 	std::vector<annotation> annotations;
 };
 
 }
 
-#endif /* SRC_GEOM_H_ */
+#endif /* GEOM_SRC_COLLECTION_H_ */
