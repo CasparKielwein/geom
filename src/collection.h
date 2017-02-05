@@ -8,41 +8,13 @@
 #ifndef GEOM_SRC_COLLECTION_H_
 #define GEOM_SRC_COLLECTION_H_
 
-#include <eigen3/Eigen/Eigen>
+#include "config.h"
+#include "object.h"
 
 namespace geom {
 
 template<class >
 class collection;
-
-template<class vector_t, class meta_t>
-struct object: meta_t {
-	using annotation = meta_t;
-	using vector_type = vector_t;
-
-	object() = default;
-	~object() = default;
-
-	object(const object& o) = default;
-	object(object&& o) = default;
-
-	object& operator=(const object&) = default;
-	object& operator=(object&&) = default;
-
-	object(vector_type p, annotation m) :
-			meta_t { std::move(m) }, point { std::move(p) } {
-	}
-
-	bool operator==(const object& o) const {
-		return meta_t::operator==(o) && point == o.point;
-	}
-
-	bool operator!=(const object& o) const {
-		return !(*this == o);
-	}
-
-	vector_type point;
-};
 
 /**
  * \brief Proxy of actual objects for reference access in iterators
@@ -210,8 +182,6 @@ public:
 			return difference_type { index - p.index };
 		}
 
-		//friend iterator operator+(size_type, const iterator&); //optional
-
 		reference operator*() {
 			return reference { access, index };
 		}
@@ -301,8 +271,6 @@ public:
 		difference_type operator-(const_iterator p) const {
 			return difference_type { index - p.index };
 		}
-
-		//friend iterator operator+(size_type, const iterator&); //optional
 
 		const_reference operator*() {
 			return const_reference { access, index };
