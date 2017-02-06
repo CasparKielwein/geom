@@ -11,13 +11,22 @@
 #include "config.h"
 #include "object.h"
 
-namespace geom {
+namespace fc
+{
+namespace geom
+{
 
 template<class >
 class collection;
 
 /**
- * \brief Proxy of actual objects for reference access in iterators
+ * \brief Proxy of actual geom::object for reference access in geom::collection::iterators
+ *
+ * \tparam T instantiation of geom::object point_reference proxies.
+ *
+ * stores index and pointer to geom::collection
+ * This allows it to refer to the point and metadata of the geom::object
+ * point_reference serves as a proxy to.
  */
 template<class T>
 struct point_reference {
@@ -97,19 +106,39 @@ void swap(point_reference<T>& l, point_reference<T>& r) {
 	l.swap(r);
 }
 
+/**
+ * \Container class for geom objects with cache friendly storage
+ *
+ * Collection stores geom objects in a "struct of arrays" manner.
+ * This allows geometric transformations to operate on the 3D Vectors
+ * without any effect of the metadata on the cache.
+ *
+ * \tparam T type of object stores in collection, an instantiation of geom::object
+ *
+ * \invariant point_matrix.size() == annotations.size()
+ */
 template<class T>
 class collection {
 public:
 	using value_type = T;
+	/// Type of vector stored (vector3d, Vector2f etc.)
 	using vector_type = typename T::vector_type;
+	/// Type of meta data in the stored objects
 	using annotation = typename T::annotation;
 	using difference_type = T*; //todo
 	using size_type = size_t;
 
+	/**
+	 * \brief random access iterator over collection.
+	 *
+	 * Dereferencing iterator returns a point_reference to the
+	 * corresponding parts of the object in the collection.
+	 */
 	class iterator {
 	public:
 		using difference_type = collection::difference_type;
 		using value_type = typename collection::value_type;
+		///Note the reference is point_reference proxy and not value_type&.
 		using reference = point_reference<T>;
 		using pointer = point_reference<T>*;
 		using size_type = typename collection::size_type;
@@ -276,7 +305,6 @@ public:
 			return const_reference { access, index };
 		}
 		const_pointer operator->() const;
-		//const_reference operator[](size_type) const; //optional
 	private:
 		size_type index = 0;
 		const collection* access = nullptr;
@@ -291,9 +319,12 @@ public:
 	collection(const collection&) = default;
 	collection(collection&&) = default;
 
+	/// Constructor taking an initalizer_list of geom::object.
 	collection(std::initializer_list<T> o) :
 			point_matrix(o.size()), annotations ( o.size() ) {
 		int index { 0 };
+
+		//extract geometric data and meta data from object and store it.
 		for (auto&& x : o) {
 			point_matrix[index] = x.point;
 			annotations[index] = static_cast<typename T::annotation>(x);
@@ -301,10 +332,13 @@ public:
 		}
 	}
 
+	///Construct collection from a range of geom::object.
 	template<class iterator_t>
 	collection(iterator_t begin, iterator_t end) :
 			point_matrix(end - begin), annotations ( end - begin ) {
 		int index { 0 };
+
+		//extract geometric data and meta data from object and store it.
 		for (auto i = begin; i != end; ++i) {
 			point_matrix[index] = i->point;
 			annotations[index] = static_cast<typename T::annotation>(*i);
@@ -312,6 +346,7 @@ public:
 		}
 	}
 
+	///Construct collection with default initialized members and @p size.
 	explicit collection(size_type size) :
 			point_matrix(size), annotations( size ) {
 	}
@@ -340,7 +375,7 @@ public:
 		return iterator { size(), this };
 	}
 
-	size_t size() const noexcept {
+	size_type size() const noexcept {
 		return annotations.size();
 	}
 	bool empty() const noexcept {
@@ -357,11 +392,11 @@ public:
 private:
 	friend class point_reference<T> ;
 
-	//Eigen::Matrix<double, , Eigen::Dynamic> point_matrix;
 	std::vector<vector_type> point_matrix;
 	std::vector<annotation> annotations;
 };
 
-}
+} // namespace geom
+} // namespace fc
 
 #endif /* GEOM_SRC_COLLECTION_H_ */

@@ -14,6 +14,8 @@
 
 #include <eigen3/Eigen/Eigen>
 
+namespace fc
+{
 namespace geom
 {
 
@@ -30,6 +32,7 @@ using Vector4f = Eigen::Vector4f;
 using Transformf = Eigen::Affine3f;
 using Transformd = Eigen::Affine3d;
 
-}
+} // namespace geom
+} // namespace fc
 
 #endif /* GEOM_SRC_CONFIG_HPP_ */

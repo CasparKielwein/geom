@@ -7,6 +7,7 @@
 
 #define __assume(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
 
+using namespace fc;
 
 struct tag {
 	long t = 0;

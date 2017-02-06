@@ -8,6 +8,8 @@
 #ifndef GEOM_SRC_TRANSFORM_HPP_
 #define GEOM_SRC_TRANSFORM_HPP_
 
+namespace fc
+{
 namespace geom
 {
 
@@ -20,7 +22,7 @@ template<class matrix_f>
 struct transformer
 {
 	template<class T>
-	decltype(auto) operator(T&& v)
+	decltype(auto) operator()(T&& v)
 	{
 		return m()*v;
 	}
@@ -50,8 +52,9 @@ auto transformf(matrix_f m)
 {
 	return detail::transform_impl(m);
 }
-} //namespace geom
 
+} //namespace geom
+}// namespace fc
 
 
 #endif /* GEOM_SRC_TRANSFORM_HPP_ */

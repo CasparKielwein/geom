@@ -10,9 +10,21 @@
 
 #include "config.h"
 
+namespace fc
+{
 namespace geom
 {
 
+/**
+ * \brief basic geometric object in geom
+ *
+ * object represents a 2D or 3D point with optional metadata.
+ * It is used together with geom::collection to allow efficient operation
+ * on large numbers of objects.
+ *
+ * \tparam vector_t type Vector stored (Vector3d, Vector2f etc.)
+ * \tparam meta_t type of meta data stored in the object.
+ */
 template<class vector_t, class meta_t>
 struct object: meta_t {
 	using annotation = meta_t;
@@ -50,5 +62,6 @@ auto operator*(const geom::Transformf m, object<V,M> o)
 }
 
 } // namespace geom
+} // namespace fc
 
 #endif /* SRC_OBJECT_H_ */
